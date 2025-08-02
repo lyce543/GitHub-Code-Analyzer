@@ -2,6 +2,9 @@ import os
 import requests
 
 def ask_ai(prompt: str, repo_path: str) -> str:
+    """
+    Відправляє запит до AI з контекстом репозиторію
+    """
     # Збираємо всі .py файли з репозиторію
     context = ""
     for root, _, files in os.walk(repo_path):
@@ -11,10 +14,11 @@ def ask_ai(prompt: str, repo_path: str) -> str:
                     with open(os.path.join(root, file), "r", encoding="utf-8") as f:
                         content = f.read()
                         context += f"\n\n# File: {file}\n{content}"
-                except:
-                    pass
+                except Exception as e:
+                    print(f"❌ Error reading {file}: {e}")
+                    continue
 
-    # Обмежимо довжину контексту (можна краще — обрізати найстаріші файли, або тільки важливі)
+    # Обмежимо довжину контексту
     max_context_chars = 8000
     if len(context) > max_context_chars:
         context = context[-max_context_chars:]
@@ -34,15 +38,24 @@ Now answer the question: {prompt}
     }
 
     payload = {
-        "model": "openai/gpt-4o",  # або gpt-4o-mini чи інша модель з OpenRouter
+        "model": os.getenv("MODEL_ID", "openai/gpt-4o"),
         "messages": [
             {"role": "user", "content": full_prompt}
         ]
     }
 
-    response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload)
+    try:
+        response = requests.post(
+            f"{os.getenv('OPENROUTER_BASE_URL', 'https://openrouter.ai/api/v1')}/chat/completions", 
+            headers=headers, 
+            json=payload,
+            timeout=30
+        )
 
-    if response.status_code == 200:
-        return response.json()["choices"][0]["message"]["content"]
-    else:
-        return f"Error: {response.status_code} - {response.text}"
+        if response.status_code == 200:
+            return response.json()["choices"][0]["message"]["content"]
+        else:
+            return f"Error: {response.status_code} - {response.text}"
+            
+    except Exception as e:
+        return f"Request error: {str(e)}"

@@ -15,12 +15,12 @@
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       min-height: 100vh;
-      padding: 2rem;
+      padding: 1rem;
       color: #333;
     }
 
     .container {
-      max-width: 1200px;
+      max-width: 1400px;
       margin: 0 auto;
       background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(20px);
@@ -38,31 +38,16 @@
       overflow: hidden;
     }
 
-    .header::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='m36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
-      opacity: 0.1;
-    }
-
     .header h1 {
       color: white;
       font-size: 2.5rem;
       font-weight: 700;
       margin-bottom: 0.5rem;
-      position: relative;
-      z-index: 1;
     }
 
     .header p {
       color: rgba(255, 255, 255, 0.8);
       font-size: 1.1rem;
-      position: relative;
-      z-index: 1;
     }
 
     .github-icon {
@@ -75,16 +60,46 @@
     }
 
     .main-content {
-      padding: 2rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      padding: 1rem;
+      min-height: calc(100vh - 200px);
+    }
+
+    .left-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .right-panel {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .repo-section, .explorer-section, .file-viewer, .chat-section {
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .section-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 1rem 1.5rem;
+      color: white;
+      font-weight: 600;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
 
     .repo-section {
-      background: white;
-      border-radius: 16px;
       padding: 1.5rem;
-      margin-bottom: 2rem;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      border: 1px solid rgba(0, 0, 0, 0.05);
+      margin-bottom: 1rem;
     }
 
     .repo-section h3 {
@@ -127,8 +142,6 @@
       cursor: pointer;
       transition: all 0.3s ease;
       font-size: 1rem;
-      position: relative;
-      overflow: hidden;
     }
 
     .load-btn:hover {
@@ -136,28 +149,126 @@
       box-shadow: 0 8px 20px rgba(40, 167, 69, 0.3);
     }
 
-    .load-btn:active {
-      transform: translateY(0);
+    .load-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .explorer-section {
+      flex: 1;
+      min-height: 400px;
+    }
+
+    .file-tree {
+      padding: 1rem;
+      overflow-y: auto;
+      max-height: 400px;
+      background: #fafbfc;
+    }
+
+    .file-tree::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .file-tree::-webkit-scrollbar-track {
+      background: #f1f3f4;
+    }
+
+    .file-tree::-webkit-scrollbar-thumb {
+      background: #c1c8cd;
+      border-radius: 6px;
+    }
+
+    .tree-item {
+      display: flex;
+      align-items: center;
+      padding: 0.25rem 0;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: background 0.2s ease;
+    }
+
+    .tree-item:hover {
+      background: rgba(102, 126, 234, 0.1);
+    }
+
+    .tree-item.selected {
+      background: rgba(102, 126, 234, 0.2);
+      font-weight: 600;
+    }
+
+    .tree-indent {
+      width: 20px;
+      flex-shrink: 0;
+    }
+
+    .tree-icon {
+      width: 16px;
+      height: 16px;
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+
+    .tree-name {
+      flex: 1;
+      font-size: 0.9rem;
+      color: #24292e;
+    }
+
+    .folder-icon {
+      color: #f39c12;
+    }
+
+    .file-icon {
+      color: #6c757d;
+    }
+
+    .python-icon {
+      color: #3776ab;
+    }
+
+    .js-icon {
+      color: #f7df1e;
+    }
+
+    .file-viewer {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 500px;
+    }
+
+    .file-content {
+      flex: 1;
+      padding: 1rem;
+      background: #f8f9fa;
+      font-family: 'Monaco', 'Consolas', monospace;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      overflow: auto;
+      white-space: pre-wrap;
+      color: #24292e;
+    }
+
+    .file-content.empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #6c757d;
+      font-family: inherit;
+      font-style: italic;
     }
 
     .chat-section {
-      background: white;
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      border: 1px solid rgba(0, 0, 0, 0.05);
-    }
-
-    .chat-header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      padding: 1rem 1.5rem;
-      color: white;
-      font-weight: 600;
-      font-size: 1.1rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 500px;
     }
 
     .chat-box {
-      height: 400px;
+      flex: 1;
       overflow-y: auto;
       padding: 1.5rem;
       background: #fafbfc;
@@ -200,7 +311,7 @@
       border-bottom-right-radius: 4px;
     }
 
-    .message.bot .message-content {
+    .message.bot .message-content, .message.system .message-content {
       background: white;
       border: 1px solid #e1e5e9;
       color: #24292e;
@@ -261,10 +372,6 @@
       box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
     }
 
-    .send-btn:active {
-      transform: translateY(0);
-    }
-
     .send-btn:disabled {
       opacity: 0.6;
       cursor: not-allowed;
@@ -291,9 +398,14 @@
     }
 
     .empty-state {
-      text-align: center;
-      padding: 3rem 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
       color: #6c757d;
+      text-align: center;
+      padding: 2rem;
     }
 
     .empty-state-icon {
@@ -325,9 +437,66 @@
       50% { opacity: 0.5; }
     }
 
+    .file-path {
+      background: #e9ecef;
+      padding: 0.5rem 1rem;
+      font-family: 'Monaco', 'Consolas', monospace;
+      font-size: 0.85rem;
+      border-bottom: 1px solid #dee2e6;
+      color: #495057;
+    }
+
+    .expandable {
+      cursor: pointer;
+    }
+
+    .expandable .tree-icon {
+      transition: transform 0.2s ease;
+    }
+
+    .expandable.expanded .tree-icon {
+      transform: rotate(90deg);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    code {
+      background: rgba(27, 31, 35, 0.05);
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-family: 'Monaco', 'Consolas', monospace;
+      font-size: 0.85em;
+    }
+
+    .cursor {
+      display: inline-block;
+      background: #667eea;
+      color: #667eea;
+      animation: blink 1s infinite;
+      margin-left: 2px;
+    }
+
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+
+    @media (max-width: 1024px) {
+      .main-content {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .left-panel, .right-panel {
+        min-height: auto;
+      }
+    }
+
     @media (max-width: 768px) {
       body {
-        padding: 1rem;
+        padding: 0.5rem;
       }
       
       .input-group {
@@ -357,48 +526,74 @@
         </svg>
         GitHub Code Analyzer
       </h1>
-      <p>Analyze any GitHub repository with AI-powered insights</p>
+      <p>Analyze repositories with AI-powered insights and file browsing</p>
+    </div>
+
+    <div class="repo-section">
+      <h3>
+        <span class="status-indicator" id="status-indicator"></span>
+        Load Repository
+      </h3>
+      <div class="input-group">
+        <input 
+          id="repo-url" 
+          class="repo-input"
+          placeholder="Enter GitHub URL (e.g., https://github.com/user/repo)"
+          type="url"
+        />
+        <button class="load-btn" onclick="loadRepo()" id="load-btn">
+          <span id="load-text">Load Repository</span>
+        </button>
+      </div>
     </div>
 
     <div class="main-content">
-      <div class="repo-section">
-        <h3>
-          <span class="status-indicator" id="status-indicator"></span>
-          Load Repository
-        </h3>
-        <div class="input-group">
-          <input 
-            id="repo-url" 
-            class="repo-input"
-            placeholder="Enter GitHub URL (e.g., https://github.com/user/repo)"
-            type="url"
-          />
-          <button class="load-btn" onclick="loadRepo()" id="load-btn">
-            <span id="load-text">Load Repository</span>
-          </button>
+      <div class="left-panel">
+        <div class="explorer-section">
+          <div class="section-header">
+            📁 Repository Structure
+          </div>
+          <div class="file-tree" id="file-tree">
+            <div class="empty-state">
+              <div class="empty-state-icon">📂</div>
+              <p>Load a repository to explore its structure</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="file-viewer">
+          <div class="section-header">
+            📄 File Viewer
+          </div>
+          <div class="file-path" id="file-path">No file selected</div>
+          <div class="file-content empty" id="file-content">
+            Select a file from the repository structure to view its contents
+          </div>
         </div>
       </div>
 
-      <div class="chat-section">
-        <div class="chat-header">
-          💬 Chat with your code
-        </div>
-        <div class="chat-box" id="chat-box">
-          <div class="empty-state">
-            <div class="empty-state-icon">🤖</div>
-            <p>Load a repository and start asking questions about the code!</p>
+      <div class="right-panel">
+        <div class="chat-section">
+          <div class="section-header">
+            💬 Chat with your code
           </div>
-        </div>
-        <div class="input-section">
-          <textarea 
-            id="user-input" 
-            class="message-input"
-            placeholder="Ask something about the code..."
-            rows="1"
-          ></textarea>
-          <button class="send-btn" onclick="sendMessage()" id="send-btn">
-            <span id="send-text">Send</span>
-          </button>
+          <div class="chat-box" id="chat-box">
+            <div class="empty-state">
+              <div class="empty-state-icon">🤖</div>
+              <p>Load a repository and start asking questions about the code!</p>
+            </div>
+          </div>
+          <div class="input-section">
+            <textarea 
+              id="user-input" 
+              class="message-input"
+              placeholder="Ask something about the code..."
+              rows="1"
+            ></textarea>
+            <button class="send-btn" onclick="sendMessage()" id="send-btn">
+              <span id="send-text">Send</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -407,6 +602,8 @@
   <script>
     let isLoading = false;
     let repositoryLoaded = false;
+    let repoStructure = null;
+    let repoFiles = {};
 
     // Auto-resize textarea
     document.getElementById('user-input').addEventListener('input', function() {
@@ -427,6 +624,139 @@
       indicator.className = 'status-indicator ' + status;
     }
 
+    function getFileIcon(filename) {
+      const ext = filename.split('.').pop().toLowerCase();
+      switch (ext) {
+        case 'py':
+          return '🐍';
+        case 'js':
+          return '📜';
+        case 'html':
+          return '🌐';
+        case 'css':
+          return '🎨';
+        case 'md':
+          return '📝';
+        case 'json':
+          return '📋';
+        case 'txt':
+          return '📄';
+        case 'yml':
+        case 'yaml':
+          return '⚙️';
+        default:
+          return '📄';
+      }
+    }
+
+    function createFileStructure(files) {
+      const structure = {};
+      
+      files.forEach(file => {
+        const parts = file.path.split('/');
+        let current = structure;
+        
+        for (let i = 0; i < parts.length; i++) {
+          const part = parts[i];
+          if (i === parts.length - 1) {
+            // It's a file
+            current[part] = {
+              type: 'file',
+              path: file.path,
+              content: file.content
+            };
+          } else {
+            // It's a directory
+            if (!current[part]) {
+              current[part] = {
+                type: 'directory',
+                children: {}
+              };
+            }
+            current = current[part].children;
+          }
+        }
+      });
+      
+      return structure;
+    }
+
+    function renderFileTree(structure, container, level = 0) {
+      const entries = Object.entries(structure).sort(([a, aData], [b, bData]) => {
+        // Directories first, then files
+        if (aData.type === 'directory' && bData.type === 'file') return -1;
+        if (aData.type === 'file' && bData.type === 'directory') return 1;
+        return a.localeCompare(b);
+      });
+
+      entries.forEach(([name, data]) => {
+        const item = document.createElement('div');
+        item.className = 'tree-item';
+        
+        const indent = document.createElement('div');
+        indent.className = 'tree-indent';
+        indent.style.marginLeft = `${level * 20}px`;
+        
+        const icon = document.createElement('div');
+        icon.className = 'tree-icon';
+        
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'tree-name';
+        nameSpan.textContent = name;
+        
+        if (data.type === 'directory') {
+          icon.innerHTML = '▶️';
+          icon.className += ' folder-icon';
+          item.className += ' expandable';
+          
+          const childContainer = document.createElement('div');
+          childContainer.className = 'hidden';
+          
+          item.addEventListener('click', (e) => {
+            e.stopPropagation();
+            item.classList.toggle('expanded');
+            childContainer.classList.toggle('hidden');
+          });
+          
+          item.appendChild(indent);
+          item.appendChild(icon);
+          item.appendChild(nameSpan);
+          container.appendChild(item);
+          container.appendChild(childContainer);
+          
+          renderFileTree(data.children, childContainer, level + 1);
+        } else {
+          icon.textContent = getFileIcon(name);
+          icon.className += ' file-icon';
+          
+          item.addEventListener('click', () => {
+            // Remove previous selection
+            document.querySelectorAll('.tree-item.selected').forEach(el => {
+              el.classList.remove('selected');
+            });
+            item.classList.add('selected');
+            
+            // Show file content
+            showFileContent(data.path, data.content, name);
+          });
+          
+          item.appendChild(indent);
+          item.appendChild(icon);
+          item.appendChild(nameSpan);
+          container.appendChild(item);
+        }
+      });
+    }
+
+    function showFileContent(path, content, filename) {
+      const pathElement = document.getElementById('file-path');
+      const contentElement = document.getElementById('file-content');
+      
+      pathElement.textContent = path;
+      contentElement.textContent = content;
+      contentElement.className = 'file-content';
+    }
+
     async function loadRepo() {
       const url = document.getElementById('repo-url').value.trim();
       if (!url) {
@@ -443,6 +773,8 @@
       updateStatus('loading');
 
       try {
+        // Load repository
+        console.log('Loading repository:', url);
         const res = await fetch('/load_repo', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
@@ -451,16 +783,39 @@
         
         const data = await res.json();
         
-        if (res.ok) {
-          repositoryLoaded = true;
-          updateStatus('ready');
-          // Clear empty state
-          document.getElementById('chat-box').innerHTML = '';
-          addMessage('system', 'Repository loaded successfully! You can now ask questions about the code.');
-        } else {
-          throw new Error(data.message || 'Failed to load repository');
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to load repository');
         }
+
+        console.log('Repository loaded, getting structure...');
+
+        // Get repository structure
+        const structureRes = await fetch('/get_repo_structure', {
+          method: 'GET'
+        });
+        
+        const structureData = await structureRes.json();
+        
+        if (!structureRes.ok) {
+          throw new Error(structureData.error || 'Failed to get repository structure');
+        }
+
+        repositoryLoaded = true;
+        updateStatus('ready');
+        
+        // Render file tree
+        const fileTreeContainer = document.getElementById('file-tree');
+        fileTreeContainer.innerHTML = '';
+        
+        repoStructure = createFileStructure(structureData.files);
+        renderFileTree(repoStructure, fileTreeContainer);
+        
+        // Clear chat and show success message
+        document.getElementById('chat-box').innerHTML = '';
+        addMessage('system', `Repository loaded successfully! Found ${structureData.files.length} files. You can now browse the code and ask questions.`);
+        
       } catch (error) {
+        console.error('Error loading repository:', error);
         updateStatus('');
         alert('Error loading repository: ' + error.message);
       } finally {
@@ -492,22 +847,62 @@
       sendBtn.disabled = true;
       sendText.innerHTML = '<div class="loading"></div>';
 
+      // Create empty bot message for streaming
+      const botMessageId = addStreamingMessage('bot', '');
+
       try {
-        const res = await fetch('/chat', {
+        const response = await fetch('/chat', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({ message: msg })
         });
-        
-        const data = await res.json();
-        
-        if (res.ok) {
-          addMessage('bot', data.answer || 'No response received');
-        } else {
-          throw new Error(data.message || 'Failed to send message');
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          
+          // Process complete lines
+          let lines = buffer.split('\n');
+          buffer = lines.pop(); // Keep incomplete line in buffer
+
+          for (let line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.slice(6));
+                
+                if (data.error) {
+                  throw new Error(data.error);
+                }
+                
+                if (data.chunk) {
+                  appendToStreamingMessage(botMessageId, data.chunk);
+                }
+                
+                if (data.done) {
+                  finishStreamingMessage(botMessageId);
+                  break;
+                }
+              } catch (e) {
+                if (e.name !== 'SyntaxError') {
+                  console.error('Error parsing streaming data:', e);
+                }
+              }
+            }
+          }
+        }
+        
       } catch (error) {
-        addMessage('bot', 'Sorry, there was an error: ' + error.message);
+        updateStreamingMessage(botMessageId, 'Sorry, there was an error: ' + error.message);
       } finally {
         sendBtn.disabled = false;
         sendText.textContent = 'Send';
@@ -528,6 +923,66 @@
       
       chatBox.appendChild(messageDiv);
       chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function addStreamingMessage(type, content) {
+      const chatBox = document.getElementById('chat-box');
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${type}`;
+      
+      const messageId = 'msg-' + Date.now();
+      messageDiv.id = messageId;
+      
+      const label = type === 'user' ? 'You' : type === 'system' ? 'System' : 'AI Assistant';
+      
+      messageDiv.innerHTML = `
+        <div class="message-label">${label}</div>
+        <div class="message-content">${formatMessage(content)}<span class="cursor">▋</span></div>
+      `;
+      
+      chatBox.appendChild(messageDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+      
+      return messageId;
+    }
+
+    function appendToStreamingMessage(messageId, chunk) {
+      const messageDiv = document.getElementById(messageId);
+      if (messageDiv) {
+        const contentDiv = messageDiv.querySelector('.message-content');
+        const cursor = contentDiv.querySelector('.cursor');
+        
+        if (cursor) {
+          // Insert chunk before cursor
+          const textNode = document.createTextNode(chunk);
+          cursor.parentNode.insertBefore(textNode, cursor);
+        } else {
+          // No cursor, just append
+          contentDiv.appendChild(document.createTextNode(chunk));
+        }
+        
+        // Auto scroll
+        const chatBox = document.getElementById('chat-box');
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+    }
+
+    function updateStreamingMessage(messageId, content) {
+      const messageDiv = document.getElementById(messageId);
+      if (messageDiv) {
+        const contentDiv = messageDiv.querySelector('.message-content');
+        contentDiv.innerHTML = formatMessage(content);
+      }
+    }
+
+    function finishStreamingMessage(messageId) {
+      const messageDiv = document.getElementById(messageId);
+      if (messageDiv) {
+        const cursor = messageDiv.querySelector('.cursor');
+        if (cursor) {
+          cursor.remove();
+        }
+      }
     }
 
     function formatMessage(content) {
