@@ -11,7 +11,7 @@ VECTORSTORE_PATH = "vectorstore"
 STATE_FILE = "repo_state.json"
 
 def load_repo_state():
-    """Завантажує стан репозиторію з файлу"""
+    """Loads repository state from file"""
     try:
         if os.path.exists(STATE_FILE):
             with open(STATE_FILE, 'r', encoding='utf-8') as f:
@@ -49,7 +49,7 @@ def index_documents(repo_path):
 
     db = FAISS.from_documents(splits, embedding)
 
-    # Зберігаємо векторну базу
+    # Save vector database
     if os.path.exists(VECTORSTORE_PATH):
         import shutil
         shutil.rmtree(VECTORSTORE_PATH)
@@ -58,7 +58,7 @@ def index_documents(repo_path):
     print(f"✅ Indexed {len(docs)} files, created {len(splits)} chunks")
 
 def ensure_db_loaded():
-    """Переконується, що векторна база завантажена"""
+    """Ensures that vector database is loaded"""
     global db
     
     if db is not None:
@@ -82,12 +82,12 @@ def ensure_db_loaded():
 def get_answer_from_repo(question):
     global db
     
-    # Перевіряємо чи репозиторій завантажений
+    # Check if repository is loaded
     repo_path = load_repo_state()
     if not repo_path:
         return "❌ No repository loaded. Please load a repository first."
     
-    # Переконуємося що векторна база завантажена
+    # Ensure vector database is loaded
     if not ensure_db_loaded():
         return "❌ Failed to load vector database. Please reload the repository."
 
@@ -105,16 +105,16 @@ def get_answer_from_repo(question):
         return f"Error generating answer: {str(e)}"
 
 def get_answer_from_repo_streaming(question):
-    """Стрімінгова версія для отримання відповідей"""
+    """Streaming version for getting answers"""
     global db
     
-    # Перевіряємо чи репозиторій завантажений
+    # Check if repository is loaded
     repo_path = load_repo_state()
     if not repo_path:
         yield "❌ No repository loaded. Please load a repository first."
         return
     
-    # Переконуємося що векторна база завантажена
+    # Ensure vector database is loaded
     if not ensure_db_loaded():
         yield "❌ Failed to load vector database. Please reload the repository."
         return
@@ -122,7 +122,7 @@ def get_answer_from_repo_streaming(question):
     print("🟢 RAG answering question with streaming:", question)
     
     try:
-        # Отримуємо релевантні документи
+        # Get relevant documents
         retriever = db.as_retriever(search_kwargs={"k": 4})
         docs = retriever.get_relevant_documents(question)
         
@@ -130,10 +130,10 @@ def get_answer_from_repo_streaming(question):
             yield "No relevant documents found in the repository."
             return
         
-        # Створюємо контекст з релевантних документів
+        # Create context from relevant documents
         context = "\n\n".join([doc.page_content for doc in docs])
         
-        # Формуємо промпт
+        # Build prompt
         prompt = f"""Based on the following code repository context, please answer the question.
 
 Context from repository:
@@ -143,10 +143,10 @@ Question: {question}
 
 Please provide a detailed and helpful answer based on the code context above."""
 
-        # Використовуємо стрімінгову модель
+        # Use streaming model
         llm = get_openrouter_llm_streaming()
         
-        # Генеруємо відповідь по частинах
+        # Generate response in chunks
         for chunk in llm.stream([{"role": "user", "content": prompt}]):
             yield chunk
             

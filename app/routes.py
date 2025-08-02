@@ -12,11 +12,11 @@ from .rag_utils import index_documents, get_answer_from_repo, get_answer_from_re
 
 router = APIRouter()
 
-# Використовуємо файл для збереження стану між запитами
+# Use file to store state between requests
 STATE_FILE = "repo_state.json"
 
 def save_repo_state(repo_path: str, repo_url: str):
-    """Зберігає стан репозиторію у файл"""
+    """Saves repository state to file"""
     state = {
         "repo_path": repo_path,
         "repo_url": repo_url,
@@ -27,12 +27,12 @@ def save_repo_state(repo_path: str, repo_url: str):
     print(f"✅ State saved: {state}")
 
 def load_repo_state():
-    """Завантажує стан репозиторію з файлу"""
+    """Loads repository state from file"""
     try:
         if os.path.exists(STATE_FILE):
             with open(STATE_FILE, 'r', encoding='utf-8') as f:
                 state = json.load(f)
-                # Перевіряємо чи існує папка
+                # Check if folder exists
                 if state.get("repo_path") and os.path.exists(state["repo_path"]):
                     print(f"✅ State loaded: {state}")
                     return state["repo_path"]
@@ -45,7 +45,7 @@ def load_repo_state():
         return None
 
 def clear_repo_state():
-    """Очищає збережений стан"""
+    """Clears saved state"""
     if os.path.exists(STATE_FILE):
         os.remove(STATE_FILE)
         print("🗑️ State cleared")
@@ -61,18 +61,18 @@ async def load_repo(req: Request):
 
         print(f"🔄 Loading repository: {repo_url}")
         
-        # Очищуємо попередній стан
+        # Clear previous state
         clear_repo_state()
         
-        # Завантаження репозиторію
+        # Download repository
         repo_path = download_repo(repo_url)
         
         print(f"✅ Repository downloaded to: {repo_path}")
 
-        # Зберігаємо стан
+        # Save state
         save_repo_state(repo_path, repo_url)
 
-        # Побудова векторної бази (індексація)
+        # Build vector database (indexing)
         print("🔄 Starting indexing...")
         index_documents(repo_path)
         print("✅ Indexing completed")
@@ -86,7 +86,7 @@ async def load_repo(req: Request):
 
 @router.get("/get_repo_structure")
 async def get_repo_structure():
-    # Завантажуємо стан з файлу
+    # Load state from file
     repo_path_global = load_repo_state()
     
     print(f"🔍 Checking repo_path_global: {repo_path_global}")
@@ -97,7 +97,7 @@ async def get_repo_structure():
     
     if not os.path.exists(repo_path_global):
         print(f"❌ Path does not exist: {repo_path_global}")
-        clear_repo_state()  # Очищаємо неіснуючий стан
+        clear_repo_state()  # Clear non-existing state
         return JSONResponse(status_code=400, content={"error": f"Repository path does not exist: {repo_path_global}"})
     
     try:
@@ -105,25 +105,25 @@ async def get_repo_structure():
         repo_path = Path(repo_path_global)
         print(f"🔍 Scanning repository at: {repo_path}")
         
-        # Збираємо всі файли з їхнім вмістом
+        # Collect all files with their content
         for file_path in repo_path.rglob("*"):
             if file_path.is_file() and not file_path.name.startswith('.'):
                 try:
-                    # Відносний шлях від кореня репозиторію
+                    # Relative path from repository root
                     relative_path = str(file_path.relative_to(repo_path))
                     
-                    # Пропускаємо файли .git та інші системні
+                    # Skip .git files and other system files
                     if '.git' in relative_path or '__pycache__' in relative_path:
                         continue
                     
-                    # Читаємо тільки текстові файли
+                    # Read only text files
                     if file_path.suffix.lower() in ['.py', '.js', '.html', '.css', '.md', '.txt', '.json', '.yml', '.yaml', '.xml', '.cfg', '.ini', '.env', '.gitignore', '.dockerfile', '']:
                         try:
                             with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
                                 content = f.read()
-                                # Обмежуємо розмір файлу для відображення
+                                # Limit file size for display
                                 if len(content) > 50000:  # 50KB limit
-                                    content = content[:50000] + "\n\n... (файл обрізано, занадто великий для відображення)"
+                                    content = content[:50000] + "\n\n... (file truncated, too large for display)"
                         except Exception as read_error:
                             content = f"Error reading file: {str(read_error)}"
                     else:
@@ -154,18 +154,18 @@ async def chat_streaming(request: Request):
         if not message:
             return JSONResponse(status_code=400, content={"error": "Missing 'message' field"})
 
-        # Перевіряємо чи репозиторій завантажений
+        # Check if repository is loaded
         repo_path = load_repo_state()
         if not repo_path:
             return JSONResponse(status_code=400, content={"error": "No repository loaded. Please load a repository first."})
 
-        # Використовуємо стрімінгову функцію
+        # Use streaming function
         def generate_response():
             try:
                 for chunk in get_answer_from_repo_streaming(message):
-                    # Відправляємо кожен шматок як Server-Sent Event
+                    # Send each chunk as Server-Sent Event
                     yield f"data: {json.dumps({'chunk': chunk})}\n\n"
-                # Сигналізуємо про завершення
+                # Signal completion
                 yield f"data: {json.dumps({'done': True})}\n\n"
             except Exception as e:
                 yield f"data: {json.dumps({'error': str(e)})}\n\n"
@@ -184,7 +184,7 @@ async def chat_streaming(request: Request):
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
 
-# Залишаємо старий ендпойнт для сумісності
+# Keep old endpoint for compatibility
 @router.post("/chat_simple")
 async def chat_simple(request: Request):
     try:
@@ -193,7 +193,7 @@ async def chat_simple(request: Request):
         if not message:
             return JSONResponse(status_code=400, content={"error": "Missing 'message' field"})
 
-        # Перевіряємо чи репозиторій завантажений
+        # Check if repository is loaded
         repo_path = load_repo_state()
         if not repo_path:
             return JSONResponse(status_code=400, content={"error": "No repository loaded. Please load a repository first."})
@@ -204,7 +204,7 @@ async def chat_simple(request: Request):
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
 
-# Ендпойнт для дебагу
+# Debug endpoint
 @router.get("/debug/status")
 async def debug_status():
     repo_path_global = load_repo_state()
@@ -215,24 +215,24 @@ async def debug_status():
         "state_file_exists": os.path.exists(STATE_FILE)
     }
 
-# Додатковий ендпойнт для очищення стану
+# Additional endpoint for clearing state
 @router.post("/clear_repo")
 async def clear_repo():
-    """Очищає завантажений репозиторій та стан"""
+    """Clears loaded repository and state"""
     try:
         repo_path = load_repo_state()
         
-        # Видаляємо папку репозиторію якщо існує
+        # Remove repository folder if exists
         if repo_path and os.path.exists(repo_path):
             shutil.rmtree(repo_path)
             print(f"🗑️ Removed repository folder: {repo_path}")
         
-        # Видаляємо векторну базу
+        # Remove vector database
         if os.path.exists("vectorstore"):
             shutil.rmtree("vectorstore")
             print("🗑️ Removed vector store")
         
-        # Очищаємо стан
+        # Clear state
         clear_repo_state()
         
         return {"message": "Repository cleared successfully"}

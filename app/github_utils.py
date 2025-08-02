@@ -4,10 +4,10 @@ import subprocess
 
 def download_repo(repo_url: str) -> str:
     """
-    Завантажує репозиторій з GitHub та повертає шлях до нього
+    Downloads repository from GitHub and returns path to it
     """
     try:
-        # Отримуємо назву репозиторію з URL
+        # Get repository name from URL
         repo_name = repo_url.rstrip("/").split("/")[-1]
         if repo_name.endswith('.git'):
             repo_name = repo_name[:-4]
@@ -16,15 +16,15 @@ def download_repo(repo_url: str) -> str:
         
         print(f"🔄 Downloading to: {repo_path}")
 
-        # Створюємо папку repos якщо її немає
+        # Create repos folder if it doesn't exist
         os.makedirs("./repos", exist_ok=True)
 
-        # Видаляємо існуючу папку якщо є
+        # Remove existing folder if exists
         if os.path.exists(repo_path):
             print(f"🗑️ Removing existing directory: {repo_path}")
             shutil.rmtree(repo_path)
 
-        # Клонуємо репозиторій
+        # Clone repository
         print(f"⬇️ Cloning repository from: {repo_url}")
         result = subprocess.run(
             ["git", "clone", repo_url, repo_path], 

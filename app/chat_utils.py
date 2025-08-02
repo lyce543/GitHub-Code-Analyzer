@@ -3,9 +3,9 @@ import requests
 
 def ask_ai(prompt: str, repo_path: str) -> str:
     """
-    Відправляє запит до AI з контекстом репозиторію
+    Sends a request to AI with repository context
     """
-    # Збираємо всі .py файли з репозиторію
+    # Collect all .py files from the repository
     context = ""
     for root, _, files in os.walk(repo_path):
         for file in files:
@@ -18,12 +18,12 @@ def ask_ai(prompt: str, repo_path: str) -> str:
                     print(f"❌ Error reading {file}: {e}")
                     continue
 
-    # Обмежимо довжину контексту
+    # Limit context length
     max_context_chars = 8000
     if len(context) > max_context_chars:
         context = context[-max_context_chars:]
 
-    # Складання фінального промпту
+    # Build final prompt
     full_prompt = f"""You are a senior developer. Below is a GitHub repository content:
 {context}
 

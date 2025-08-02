@@ -5,10 +5,10 @@ from app.routes import router
 from dotenv import load_dotenv
 import os
 
-# Завантажуємо змінні середовища
+# Load environment variables
 load_dotenv()
 
-# Перевіряємо наявність необхідних змінних
+# Check for required environment variables
 required_env_vars = ["OPENROUTER_API_KEY"]
 missing_vars = [var for var in required_env_vars if not os.getenv(var)]
 
@@ -20,7 +20,7 @@ else:
 
 app = FastAPI(title="GitHub AI Code Analyzer", version="1.0.0")
 
-# Додаємо CORS middleware
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -29,10 +29,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Підключаємо роути
+# Include routes
 app.include_router(router)
 
-# Статичні файли (фронтенд)
+# Static files (frontend)
 app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
 
 if __name__ == "__main__":

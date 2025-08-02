@@ -13,7 +13,7 @@ def get_openrouter_llm():
     )
 
 def get_openrouter_llm_streaming():
-    """Стрімінгова версія для прямої роботи з OpenRouter API"""
+    """Streaming version for direct work with OpenRouter API"""
     return OpenRouterStreaming()
 
 class OpenRouterStreaming:
@@ -23,7 +23,7 @@ class OpenRouterStreaming:
         self.model = os.getenv("MODEL_ID", "openai/gpt-4o")
     
     def stream(self, messages):
-        """Генерує стрімінгову відповідь"""
+        """Generates streaming response"""
         
         if not self.api_key:
             yield "Error: OPENROUTER_API_KEY not set"
@@ -36,7 +36,7 @@ class OpenRouterStreaming:
             "Content-Type": "application/json",
         }
 
-        # Конвертуємо формат повідомлень
+        # Convert message format
         formatted_messages = []
         for msg in messages:
             if isinstance(msg, dict):
@@ -72,7 +72,7 @@ class OpenRouterStreaming:
                 if line:
                     line = line.decode('utf-8')
                     if line.startswith('data: '):
-                        data_str = line[6:].strip()  # Видаляємо 'data: '
+                        data_str = line[6:].strip()  # Remove 'data: '
                         
                         if data_str == '[DONE]':
                             break
