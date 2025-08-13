@@ -1,14 +1,21 @@
 from langchain.vectorstores import FAISS
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.embeddings import HuggingFaceEmbeddings
+from langchain_openai import OpenAIEmbeddings
 from langchain.chains import RetrievalQA
-from app.llm import get_openrouter_llm, get_openrouter_llm_streaming
+from app.llm import get_openai_llm, get_openai_llm_streaming
 import os
 import json
 
 db = None
 VECTORSTORE_PATH = "vectorstore"
 STATE_FILE = "repo_state.json"
+
+def get_embeddings():
+    """Get OpenAI embeddings instance"""
+    return OpenAIEmbeddings(
+        api_key=os.getenv("OPENAI_API_KEY"),
+        model="text-embedding-3-small"  # or text-embedding-3-large for better quality
+    )
 
 def load_repo_state():
     """Loads repository state from file"""
@@ -45,8 +52,11 @@ def index_documents(repo_path):
     texts = [doc["text"] for doc in docs]
     splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     splits = splitter.create_documents(texts)
-    embedding = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-
+    
+    # Use OpenAI embeddings
+    embedding = get_embeddings()
+    
+    print(f"🔄 Creating embeddings for {len(splits)} chunks using OpenAI...")
     db = FAISS.from_documents(splits, embedding)
 
     # Save vector database
@@ -55,7 +65,7 @@ def index_documents(repo_path):
         shutil.rmtree(VECTORSTORE_PATH)
     
     db.save_local(VECTORSTORE_PATH)
-    print(f"✅ Indexed {len(docs)} files, created {len(splits)} chunks")
+    print(f"✅ Indexed {len(docs)} files, created {len(splits)} chunks with OpenAI embeddings")
 
 def ensure_db_loaded():
     """Ensures that vector database is loaded"""
@@ -71,9 +81,10 @@ def ensure_db_loaded():
         return False
     
     try:
-        embedding = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+        # Use same embedding model for loading
+        embedding = get_embeddings()
         db = FAISS.load_local(VECTORSTORE_PATH, embeddings=embedding, allow_dangerous_deserialization=True)
-        print("✅ Vector store loaded successfully")
+        print("✅ Vector store loaded successfully with OpenAI embeddings")
         return True
     except Exception as e:
         print(f"❌ Error loading vector store: {e}")
@@ -93,7 +104,7 @@ def get_answer_from_repo(question):
 
     print("🟢 RAG answering question:", question)
     try:
-        llm = get_openrouter_llm()
+        llm = get_openai_llm()
         qa = RetrievalQA.from_chain_type(
             llm=llm,
             retriever=db.as_retriever(),
@@ -122,7 +133,7 @@ def get_answer_from_repo_streaming(question):
     print("🟢 RAG answering question with streaming:", question)
     
     try:
-        # Get relevant documents
+        # Get relevant documents using OpenAI embeddings
         retriever = db.as_retriever(search_kwargs={"k": 4})
         docs = retriever.get_relevant_documents(question)
         
@@ -143,8 +154,8 @@ Question: {question}
 
 Please provide a detailed and helpful answer based on the code context above."""
 
-        # Use streaming model
-        llm = get_openrouter_llm_streaming()
+        # Use streaming OpenAI model
+        llm = get_openai_llm_streaming()
         
         # Generate response in chunks
         for chunk in llm.stream([{"role": "user", "content": prompt}]):

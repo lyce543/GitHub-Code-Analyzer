@@ -1,9 +1,9 @@
 import os
-import requests
+from openai import OpenAI
 
 def ask_ai(prompt: str, repo_path: str) -> str:
     """
-    Sends a request to AI with repository context
+    Sends a request to OpenAI with repository context
     """
     # Collect all .py files from the repository
     context = ""
@@ -30,32 +30,19 @@ def ask_ai(prompt: str, repo_path: str) -> str:
 Now answer the question: {prompt}
 """
 
-    headers = {
-        "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}",
-        "HTTP-Referer": "http://localhost",
-        "X-Title": "repo-analyzer",
-        "Content-Type": "application/json",
-    }
-
-    payload = {
-        "model": os.getenv("MODEL_ID", "openai/gpt-4o"),
-        "messages": [
-            {"role": "user", "content": full_prompt}
-        ]
-    }
-
     try:
-        response = requests.post(
-            f"{os.getenv('OPENROUTER_BASE_URL', 'https://openrouter.ai/api/v1')}/chat/completions", 
-            headers=headers, 
-            json=payload,
-            timeout=30
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        
+        response = client.chat.completions.create(
+            model=os.getenv("OPENAI_MODEL", "gpt-4o"),
+            messages=[
+                {"role": "user", "content": full_prompt}
+            ],
+            temperature=0.3,
+            max_tokens=1024
         )
-
-        if response.status_code == 200:
-            return response.json()["choices"][0]["message"]["content"]
-        else:
-            return f"Error: {response.status_code} - {response.text}"
-            
+        
+        return response.choices[0].message.content
+        
     except Exception as e:
-        return f"Request error: {str(e)}"
+        return f"OpenAI API error: {str(e)}"

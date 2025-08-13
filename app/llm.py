@@ -1,42 +1,34 @@
 import os
-import requests
 import json
 from langchain_openai import ChatOpenAI
+from openai import OpenAI
 
-def get_openrouter_llm():
+def get_openai_llm():
+    """Get OpenAI LLM instance for LangChain"""
     return ChatOpenAI(
-        api_key=os.getenv("OPENROUTER_API_KEY"),
-        base_url=os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"),
-        model=os.getenv("MODEL_ID", "openai/gpt-4o"),
+        api_key=os.getenv("OPENAI_API_KEY"),
+        model=os.getenv("OPENAI_MODEL", "gpt-4o"),
         temperature=0.3,
         max_tokens=1024
     )
 
-def get_openrouter_llm_streaming():
-    """Streaming version for direct work with OpenRouter API"""
-    return OpenRouterStreaming()
+def get_openai_llm_streaming():
+    """Streaming version for direct work with OpenAI API"""
+    return OpenAIStreaming()
 
-class OpenRouterStreaming:
+class OpenAIStreaming:
     def __init__(self):
-        self.api_key = os.getenv("OPENROUTER_API_KEY")
-        self.base_url = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
-        self.model = os.getenv("MODEL_ID", "openai/gpt-4o")
+        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.model = os.getenv("OPENAI_MODEL", "gpt-4o")
     
     def stream(self, messages):
         """Generates streaming response"""
         
-        if not self.api_key:
-            yield "Error: OPENROUTER_API_KEY not set"
+        if not self.client.api_key:
+            yield "Error: OPENAI_API_KEY not set"
             return
-            
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "HTTP-Referer": "http://localhost",
-            "X-Title": "repo-analyzer",
-            "Content-Type": "application/json",
-        }
-
-        # Convert message format
+        
+        # Convert message format if needed
         formatted_messages = []
         for msg in messages:
             if isinstance(msg, dict):
@@ -44,49 +36,23 @@ class OpenRouterStreaming:
             else:
                 formatted_messages.append({"role": "user", "content": str(msg)})
 
-        payload = {
-            "model": self.model,
-            "messages": formatted_messages,
-            "stream": True,
-            "temperature": 0.3,
-            "max_tokens": 1024
-        }
-
         try:
-            print(f"🔄 Making streaming request to {self.base_url}/chat/completions")
-            response = requests.post(
-                f"{self.base_url}/chat/completions",
-                headers=headers,
-                json=payload,
+            print(f"🔄 Making streaming request to OpenAI API")
+            
+            # Create streaming chat completion
+            stream = self.client.chat.completions.create(
+                model=self.model,
+                messages=formatted_messages,
                 stream=True,
-                timeout=30
+                temperature=0.3,
+                max_tokens=1024
             )
             
-            if response.status_code != 200:
-                yield f"Error: {response.status_code} - {response.text}"
-                return
-
             print("✅ Streaming response received")
             
-            for line in response.iter_lines():
-                if line:
-                    line = line.decode('utf-8')
-                    if line.startswith('data: '):
-                        data_str = line[6:].strip()  # Remove 'data: '
-                        
-                        if data_str == '[DONE]':
-                            break
-                            
-                        try:
-                            data = json.loads(data_str)
-                            if 'choices' in data and len(data['choices']) > 0:
-                                delta = data['choices'][0].get('delta', {})
-                                if 'content' in delta and delta['content']:
-                                    yield delta['content']
-                        except json.JSONDecodeError:
-                            continue
-                            
-        except requests.exceptions.RequestException as e:
-            yield f"Network error: {str(e)}"
+            for chunk in stream:
+                if chunk.choices[0].delta.content is not None:
+                    yield chunk.choices[0].delta.content
+                    
         except Exception as e:
-            yield f"Streaming error: {str(e)}"
+            yield f"OpenAI API error: {str(e)}"
