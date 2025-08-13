@@ -6,14 +6,15 @@ from pathlib import Path
 import tempfile
 import shutil
 
-from .github_utils import download_repo
-from .chat_utils import ask_ai
-from .rag_utils import index_documents, get_answer_from_repo, get_answer_from_repo_streaming
+from utils.github_utils import download_repo
+from utils.chat_utils import ask_ai
+from utils.rag_utils import index_documents, get_answer_from_repo, get_answer_from_repo_streaming
+from config import APP_CONFIG, FILE_PROCESSING_CONFIG
 
 router = APIRouter()
 
 # Use file to store state between requests
-STATE_FILE = "repo_state.json"
+STATE_FILE = APP_CONFIG['state_file']
 
 def save_repo_state(repo_path: str, repo_url: str):
     """Saves repository state to file"""
@@ -37,11 +38,11 @@ def load_repo_state():
                     print(f"✅ State loaded: {state}")
                     return state["repo_path"]
                 else:
-                    print(f"❌ Saved path doesn't exist: {state.get('repo_path')}")
-        print("❌ No valid state found")
+                    print(f"⛔ Saved path doesn't exist: {state.get('repo_path')}")
+        print("⛔ No valid state found")
         return None
     except Exception as e:
-        print(f"❌ Error loading state: {e}")
+        print(f"⛔ Error loading state: {e}")
         return None
 
 def clear_repo_state():
@@ -59,7 +60,7 @@ async def load_repo(req: Request):
         if not repo_url:
             return JSONResponse(status_code=400, content={"error": "Missing repository URL"})
 
-        print(f"🔄 Loading repository: {repo_url}")
+        print(f"📄 Loading repository: {repo_url}")
         
         # Clear previous state
         clear_repo_state()
@@ -73,14 +74,14 @@ async def load_repo(req: Request):
         save_repo_state(repo_path, repo_url)
 
         # Build vector database (indexing)
-        print("🔄 Starting indexing...")
+        print("📄 Starting indexing...")
         index_documents(repo_path)
         print("✅ Indexing completed")
 
         return {"message": "Repository downloaded and indexed.", "path": repo_path}
         
     except Exception as e:
-        print(f"❌ Error in load_repo: {str(e)}")
+        print(f"⛔ Error in load_repo: {str(e)}")
         clear_repo_state()
         return JSONResponse(status_code=500, content={"error": f"Loading failed: {str(e)}"})
 
@@ -92,11 +93,11 @@ async def get_repo_structure():
     print(f"🔍 Checking repo_path_global: {repo_path_global}")
     
     if not repo_path_global:
-        print("❌ repo_path_global is None")
+        print("⛔ repo_path_global is None")
         return JSONResponse(status_code=400, content={"error": "No repository loaded - repo_path_global is None"})
     
     if not os.path.exists(repo_path_global):
-        print(f"❌ Path does not exist: {repo_path_global}")
+        print(f"⛔ Path does not exist: {repo_path_global}")
         clear_repo_state()  # Clear non-existing state
         return JSONResponse(status_code=400, content={"error": f"Repository path does not exist: {repo_path_global}"})
     
@@ -112,18 +113,24 @@ async def get_repo_structure():
                     # Relative path from repository root
                     relative_path = str(file_path.relative_to(repo_path))
                     
-                    # Skip .git files and other system files
-                    if '.git' in relative_path or '__pycache__' in relative_path:
+                    # Skip excluded folders and other system files
+                    skip_file = False
+                    for excluded_folder in FILE_PROCESSING_CONFIG['excluded_folders']:
+                        if excluded_folder in relative_path:
+                            skip_file = True
+                            break
+                    
+                    if skip_file:
                         continue
                     
-                    # Read only text files
-                    if file_path.suffix.lower() in ['.py', '.js', '.html', '.css', '.md', '.txt', '.json', '.yml', '.yaml', '.xml', '.cfg', '.ini', '.env', '.gitignore', '.dockerfile', '']:
+                    # Read only supported text files
+                    if file_path.suffix.lower() in FILE_PROCESSING_CONFIG['supported_extensions'] or file_path.suffix == '':
                         try:
                             with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
                                 content = f.read()
                                 # Limit file size for display
-                                if len(content) > 50000:  # 50KB limit
-                                    content = content[:50000] + "\n\n... (file truncated, too large for display)"
+                                if len(content) > FILE_PROCESSING_CONFIG['max_file_size_display']:
+                                    content = content[:FILE_PROCESSING_CONFIG['max_file_size_display']] + "\n\n... (file truncated, too large for display)"
                         except Exception as read_error:
                             content = f"Error reading file: {str(read_error)}"
                     else:
@@ -136,14 +143,14 @@ async def get_repo_structure():
                     })
                     
                 except Exception as e:
-                    print(f"❌ Error processing file {file_path}: {str(e)}")
+                    print(f"⛔ Error processing file {file_path}: {str(e)}")
                     continue
         
         print(f"✅ Found {len(files)} files")
         return {"files": files}
         
     except Exception as e:
-        print(f"❌ Exception in get_repo_structure: {str(e)}")
+        print(f"⛔ Exception in get_repo_structure: {str(e)}")
         return JSONResponse(status_code=500, content={"error": f"Failed to get repository structure: {str(e)}"})
 
 @router.post("/chat")
@@ -228,8 +235,8 @@ async def clear_repo():
             print(f"🗑️ Removed repository folder: {repo_path}")
         
         # Remove vector database
-        if os.path.exists("vectorstore"):
-            shutil.rmtree("vectorstore")
+        if os.path.exists(APP_CONFIG['vectorstore_path']):
+            shutil.rmtree(APP_CONFIG['vectorstore_path'])
             print("🗑️ Removed vector store")
         
         # Clear state
@@ -238,5 +245,5 @@ async def clear_repo():
         return {"message": "Repository cleared successfully"}
         
     except Exception as e:
-        print(f"❌ Error clearing repository: {str(e)}")
+        print(f"⛔ Error clearing repository: {str(e)}")
         return JSONResponse(status_code=500, content={"error": f"Failed to clear repository: {str(e)}"})
