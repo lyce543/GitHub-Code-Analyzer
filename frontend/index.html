@@ -3,999 +3,968 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GitHub AI Code Analyzer</title>
+  <title>GitHub Code Analyzer</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    :root {
+      --nav-h: 56px;
+      --sidebar-w: 240px;
+      --chat-w: 360px;
+
+      --nav-bg: #24292f;
+      --nav-border: #444c56;
+      --sidebar-bg: #f6f8fa;
+      --sidebar-border: #d0d7de;
+      --content-bg: #ffffff;
+      --chat-bg: #f6f8fa;
+
+      --border: #d0d7de;
+      --border-subtle: #eaeef2;
+
+      --text: #1f2328;
+      --text-secondary: #656d76;
+      --text-muted: #9198a1;
+      --text-on-dark: #e6edf3;
+      --text-on-dark-muted: #848d97;
+
+      --accent: #0969da;
+      --accent-hover: #0550ae;
+      --accent-subtle: #ddf4ff;
+
+      --green: #1a7f37;
+      --green-bg: #dafbe1;
+      --green-border: #aceebb;
+
+      --user-bubble: #0969da;
+      --bot-bubble: #ffffff;
+
+      --code-bg: #f6f8fa;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      --mono: 'JetBrains Mono', 'Fira Code', 'Consolas', 'Monaco', monospace;
+      --radius: 6px;
     }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body { height: 100%; overflow: hidden; }
 
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      padding: 1rem;
-      color: #333;
-    }
-
-    .container {
-      max-width: 1400px;
-      margin: 0 auto;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(20px);
-      border-radius: 24px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-      overflow: hidden;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .header {
-      background: linear-gradient(135deg, #24292e 0%, #2f363d 100%);
-      padding: 2rem;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .header h1 {
-      color: white;
-      font-size: 2.5rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-    }
-
-    .header p {
-      color: rgba(255, 255, 255, 0.8);
-      font-size: 1.1rem;
-    }
-
-    .github-icon {
-      display: inline-block;
-      width: 32px;
-      height: 32px;
-      margin-right: 12px;
-      vertical-align: middle;
-      fill: currentColor;
-    }
-
-    .main-content {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-      padding: 1rem;
-      min-height: calc(100vh - 200px);
-    }
-
-    .left-panel {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .right-panel {
+      font-family: var(--font);
+      font-size: 14px;
+      color: var(--text);
+      background: var(--content-bg);
       display: flex;
       flex-direction: column;
     }
 
-    .repo-section, .explorer-section, .file-viewer, .chat-section {
-      background: white;
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      border: 1px solid rgba(0, 0, 0, 0.05);
-    }
-
-    .section-header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      padding: 1rem 1.5rem;
-      color: white;
-      font-weight: 600;
-      font-size: 1.1rem;
+    /* ── NAV ─────────────────────────────────────────── */
+    .nav {
+      height: var(--nav-h);
+      background: var(--nav-bg);
+      border-bottom: 1px solid var(--nav-border);
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      padding: 0 16px;
+      gap: 16px;
+      flex-shrink: 0;
+      z-index: 10;
     }
 
-    .repo-section {
-      padding: 1.5rem;
-      margin-bottom: 1rem;
-    }
-
-    .repo-section h3 {
-      color: #24292e;
-      margin-bottom: 1rem;
-      font-size: 1.2rem;
-      font-weight: 600;
-    }
-
-    .input-group {
+    .nav-brand {
       display: flex;
-      gap: 1rem;
-      align-items: stretch;
-    }
-
-    .repo-input {
-      flex: 1;
-      padding: 1rem 1.5rem;
-      border: 2px solid #e1e5e9;
-      border-radius: 12px;
-      font-size: 1rem;
-      transition: all 0.3s ease;
-      background: #fafbfc;
-    }
-
-    .repo-input:focus {
-      outline: none;
-      border-color: #667eea;
-      background: white;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-
-    .load-btn {
-      padding: 1rem 2rem;
-      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-      color: white;
-      border: none;
-      border-radius: 12px;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-on-dark);
       font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      font-size: 1rem;
+      font-size: 15px;
+      white-space: nowrap;
+      text-decoration: none;
+      flex-shrink: 0;
     }
 
-    .load-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(40, 167, 69, 0.3);
+    .nav-brand svg { color: var(--text-on-dark-muted); }
+
+    .nav-divider {
+      width: 1px;
+      height: 20px;
+      background: var(--nav-border);
+      flex-shrink: 0;
     }
 
-    .load-btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .explorer-section {
+    .nav-repo-form {
       flex: 1;
-      min-height: 400px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      max-width: 640px;
+    }
+
+    .nav-input {
+      flex: 1;
+      height: 32px;
+      padding: 0 10px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid var(--nav-border);
+      border-radius: var(--radius);
+      color: var(--text-on-dark);
+      font-size: 13px;
+      font-family: var(--font);
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .nav-input::placeholder { color: var(--text-on-dark-muted); }
+    .nav-input:focus {
+      outline: none;
+      border-color: #58a6ff;
+      background: rgba(255,255,255,0.1);
+    }
+
+    .btn {
+      height: 32px;
+      padding: 0 12px;
+      border: 1px solid;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 500;
+      font-family: var(--font);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-primary {
+      background: #238636;
+      border-color: #2ea043;
+      color: #fff;
+    }
+    .btn-primary:hover:not(:disabled) { background: #2ea043; }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.07);
+      border-color: var(--nav-border);
+      color: var(--text-on-dark);
+    }
+    .btn-secondary:hover:not(:disabled) { background: rgba(255,255,255,0.13); }
+
+    .nav-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-on-dark-muted);
+      font-size: 12px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--text-on-dark-muted);
+      flex-shrink: 0;
+    }
+    .status-dot.ready   { background: #3fb950; box-shadow: 0 0 0 3px rgba(63,185,80,.2); }
+    .status-dot.loading { background: #d29922; animation: pulse 1.2s ease-in-out infinite; }
+
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    @keyframes spin   { to{transform:rotate(360deg)} }
+
+    /* ── WORKSPACE ───────────────────────────────────── */
+    .workspace {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ── SIDEBAR ─────────────────────────────────────── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .panel-title {
+      height: 36px;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border);
+      background: var(--sidebar-bg);
+      flex-shrink: 0;
     }
 
     .file-tree {
-      padding: 1rem;
+      flex: 1;
       overflow-y: auto;
-      max-height: 400px;
-      background: #fafbfc;
+      padding: 4px 0;
     }
 
-    .file-tree::-webkit-scrollbar {
-      width: 6px;
-    }
+    .file-tree::-webkit-scrollbar { width: 5px; }
+    .file-tree::-webkit-scrollbar-track { background: transparent; }
+    .file-tree::-webkit-scrollbar-thumb { background: #c8d1da; border-radius: 4px; }
 
-    .file-tree::-webkit-scrollbar-track {
-      background: #f1f3f4;
-    }
-
-    .file-tree::-webkit-scrollbar-thumb {
-      background: #c1c8cd;
-      border-radius: 6px;
-    }
-
-    .tree-item {
+    .tree-row {
       display: flex;
       align-items: center;
-      padding: 0.25rem 0;
+      height: 26px;
+      padding: 0 8px;
       cursor: pointer;
-      border-radius: 6px;
-      transition: background 0.2s ease;
+      user-select: none;
+      border-radius: 4px;
+      margin: 0 4px;
+      gap: 4px;
+      transition: background 0.1s;
     }
+    .tree-row:hover { background: rgba(0,0,0,0.04); }
+    .tree-row.active { background: rgba(9,105,218,.1); color: var(--accent); }
 
-    .tree-item:hover {
-      background: rgba(102, 126, 234, 0.1);
-    }
+    .tree-row svg { flex-shrink: 0; color: var(--text-muted); }
+    .tree-row.active svg { color: var(--accent); }
 
-    .tree-item.selected {
-      background: rgba(102, 126, 234, 0.2);
-      font-weight: 600;
-    }
-
-    .tree-indent {
-      width: 20px;
-      flex-shrink: 0;
-    }
-
-    .tree-icon {
+    .tree-chevron {
       width: 16px;
       height: 16px;
-      margin-right: 8px;
-      flex-shrink: 0;
-    }
-
-    .tree-name {
-      flex: 1;
-      font-size: 0.9rem;
-      color: #24292e;
-    }
-
-    .folder-icon {
-      color: #f39c12;
-    }
-
-    .file-icon {
-      color: #6c757d;
-    }
-
-    .python-icon {
-      color: #3776ab;
-    }
-
-    .js-icon {
-      color: #f7df1e;
-    }
-
-    .file-viewer {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-height: 500px;
-    }
-
-    .file-content {
-      flex: 1;
-      padding: 1rem;
-      background: #f8f9fa;
-      font-family: 'Monaco', 'Consolas', monospace;
-      font-size: 0.9rem;
-      line-height: 1.5;
-      overflow: auto;
-      white-space: pre-wrap;
-      color: #24292e;
-    }
-
-    .file-content.empty {
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #6c757d;
-      font-family: inherit;
-      font-style: italic;
+      flex-shrink: 0;
+      transition: transform 0.15s;
+      color: var(--text-muted);
+    }
+    .tree-chevron.open { transform: rotate(90deg); }
+
+    .tree-label {
+      font-size: 13px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
     }
 
-    .chat-section {
+    .tree-children { display: none; }
+    .tree-children.open { display: block; }
+
+    .sidebar-empty {
       flex: 1;
       display: flex;
       flex-direction: column;
-      min-height: 500px;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: var(--text-muted);
+      padding: 24px;
+      text-align: center;
     }
+    .sidebar-empty p { font-size: 12px; line-height: 1.5; }
 
-    .chat-box {
+    /* ── EDITOR ──────────────────────────────────────── */
+    .editor {
       flex: 1;
-      overflow-y: auto;
-      padding: 1.5rem;
-      background: #fafbfc;
-      border-bottom: 1px solid #e1e5e9;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border-right: 1px solid var(--border);
     }
 
-    .chat-box::-webkit-scrollbar {
-      width: 6px;
+    .editor-tabs {
+      height: 36px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: stretch;
+      background: var(--content-bg);
+      flex-shrink: 0;
+      overflow-x: auto;
     }
 
-    .chat-box::-webkit-scrollbar-track {
-      background: #f1f3f4;
+    .editor-tab {
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      border-right: 1px solid var(--border);
+      white-space: nowrap;
+      cursor: pointer;
+      background: var(--sidebar-bg);
+      transition: background 0.1s;
+    }
+    .editor-tab.active {
+      background: var(--content-bg);
+      color: var(--text);
+      border-bottom: 2px solid var(--accent);
+      margin-bottom: -1px;
     }
 
-    .chat-box::-webkit-scrollbar-thumb {
-      background: #c1c8cd;
-      border-radius: 6px;
-    }
-
-    .message {
-      margin-bottom: 1.5rem;
-      animation: fadeIn 0.3s ease;
-    }
-
-    .message.user {
-      text-align: right;
-    }
-
-    .message-content {
-      display: inline-block;
-      max-width: 80%;
-      padding: 1rem 1.5rem;
-      border-radius: 18px;
+    .editor-body {
+      flex: 1;
+      overflow: auto;
+      background: var(--content-bg);
       position: relative;
     }
 
-    .message.user .message-content {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border-bottom-right-radius: 4px;
+    .editor-body::-webkit-scrollbar { width: 8px; height: 8px; }
+    .editor-body::-webkit-scrollbar-track { background: transparent; }
+    .editor-body::-webkit-scrollbar-thumb { background: #c8d1da; border-radius: 4px; }
+
+    .code-wrap {
+      display: table;
+      min-width: 100%;
     }
 
-    .message.bot .message-content, .message.system .message-content {
-      background: white;
-      border: 1px solid #e1e5e9;
-      color: #24292e;
-      border-bottom-left-radius: 4px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    .line-nums {
+      display: table-cell;
+      width: 1%;
+      padding: 16px 0;
+      text-align: right;
+      vertical-align: top;
+      user-select: none;
+      position: sticky;
+      left: 0;
+      background: var(--content-bg);
+      border-right: 1px solid var(--border-subtle);
     }
 
-    .message-label {
-      font-size: 0.8rem;
-      margin-bottom: 0.5rem;
-      font-weight: 600;
-      opacity: 0.7;
+    .line-num {
+      display: block;
+      padding: 0 12px 0 16px;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 20px;
+      color: var(--text-muted);
     }
 
-    .input-section {
-      padding: 1.5rem;
-      background: white;
-      display: flex;
-      gap: 1rem;
-      align-items: flex-end;
+    .code-content {
+      display: table-cell;
+      vertical-align: top;
+      padding: 16px 16px 16px 12px;
     }
 
-    .message-input {
-      flex: 1;
-      padding: 1rem 1.5rem;
-      border: 2px solid #e1e5e9;
-      border-radius: 12px;
-      resize: vertical;
-      min-height: 60px;
-      font-family: inherit;
-      font-size: 1rem;
-      transition: all 0.3s ease;
-      background: #fafbfc;
+    pre {
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 20px;
+      color: var(--text);
+      white-space: pre;
+      tab-size: 4;
     }
 
-    .message-input:focus {
-      outline: none;
-      border-color: #667eea;
-      background: white;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-
-    .send-btn {
-      padding: 1rem 2rem;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      font-size: 1rem;
-      height: 60px;
-    }
-
-    .send-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
-    }
-
-    .send-btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .loading {
-      display: inline-block;
-      width: 20px;
-      height: 20px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-radius: 50%;
-      border-top-color: white;
-      animation: spin 1s ease-in-out infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .empty-state {
+    .editor-placeholder {
+      position: absolute;
+      inset: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100%;
-      color: #6c757d;
+      gap: 12px;
+      color: var(--text-muted);
+    }
+    .editor-placeholder p { font-size: 13px; }
+
+    /* ── CHAT ────────────────────────────────────────── */
+    .chat-panel {
+      width: var(--chat-w);
+      display: flex;
+      flex-direction: column;
+      background: var(--content-bg);
+      flex-shrink: 0;
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: var(--chat-bg);
+    }
+
+    .chat-messages::-webkit-scrollbar { width: 5px; }
+    .chat-messages::-webkit-scrollbar-track { background: transparent; }
+    .chat-messages::-webkit-scrollbar-thumb { background: #c8d1da; border-radius: 4px; }
+
+    .chat-empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: var(--text-muted);
       text-align: center;
-      padding: 2rem;
+      padding: 24px;
+    }
+    .chat-empty p { font-size: 12px; line-height: 1.5; }
+
+    .msg { display: flex; flex-direction: column; gap: 3px; }
+    .msg.user { align-items: flex-end; }
+    .msg.bot, .msg.system { align-items: flex-start; }
+
+    .msg-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      padding: 0 4px;
     }
 
-    .empty-state-icon {
-      font-size: 3rem;
-      margin-bottom: 1rem;
-      opacity: 0.5;
+    .msg-bubble {
+      max-width: 88%;
+      padding: 8px 12px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      line-height: 1.55;
+      word-break: break-word;
     }
 
-    .status-indicator {
+    .msg.user .msg-bubble {
+      background: var(--accent);
+      color: #fff;
+      border-bottom-right-radius: 2px;
+    }
+
+    .msg.bot .msg-bubble {
+      background: var(--content-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-bottom-left-radius: 2px;
+    }
+
+    .msg.system .msg-bubble {
+      background: var(--green-bg);
+      border: 1px solid var(--green-border);
+      color: #1a7f37;
+      font-size: 12px;
+    }
+
+    .msg-bubble code {
+      font-family: var(--mono);
+      font-size: 12px;
+      background: rgba(0,0,0,0.06);
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+
+    .msg.user .msg-bubble code { background: rgba(255,255,255,0.2); }
+
+    .cursor-blink {
       display: inline-block;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      margin-right: 8px;
-    }
-
-    .status-indicator.ready {
-      background: #28a745;
-      box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.3);
-    }
-
-    .status-indicator.loading {
-      background: #ffc107;
-      animation: pulse 1.5s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-
-    .file-path {
-      background: #e9ecef;
-      padding: 0.5rem 1rem;
-      font-family: 'Monaco', 'Consolas', monospace;
-      font-size: 0.85rem;
-      border-bottom: 1px solid #dee2e6;
-      color: #495057;
-    }
-
-    .expandable {
-      cursor: pointer;
-    }
-
-    .expandable .tree-icon {
-      transition: transform 0.2s ease;
-    }
-
-    .expandable.expanded .tree-icon {
-      transform: rotate(90deg);
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    code {
-      background: rgba(27, 31, 35, 0.05);
-      padding: 0.2rem 0.4rem;
-      border-radius: 4px;
-      font-family: 'Monaco', 'Consolas', monospace;
-      font-size: 0.85em;
-    }
-
-    .cursor {
-      display: inline-block;
-      background: #667eea;
-      color: #667eea;
-      animation: blink 1s infinite;
+      width: 2px;
+      height: 13px;
+      background: var(--accent);
       margin-left: 2px;
+      vertical-align: text-bottom;
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    .chat-footer {
+      border-top: 1px solid var(--border);
+      padding: 12px;
+      background: var(--content-bg);
     }
 
-    @keyframes blink {
-      0%, 50% { opacity: 1; }
-      51%, 100% { opacity: 0; }
+    .chat-input-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
     }
 
-    @media (max-width: 1024px) {
-      .main-content {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-      }
+    .chat-textarea {
+      flex: 1;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-family: var(--font);
+      resize: none;
+      min-height: 36px;
+      max-height: 120px;
+      line-height: 1.5;
+      background: var(--content-bg);
+      color: var(--text);
+      transition: border-color 0.15s;
+    }
+    .chat-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(9,105,218,.12);
+    }
+    .chat-textarea::placeholder { color: var(--text-muted); }
 
-      .left-panel, .right-panel {
-        min-height: auto;
-      }
+    .btn-send {
+      height: 36px;
+      width: 36px;
+      padding: 0;
+      background: var(--accent);
+      border: 1px solid var(--accent-hover);
+      border-radius: var(--radius);
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    .btn-send:hover:not(:disabled) { background: var(--accent-hover); }
+    .btn-send:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
     }
 
-    @media (max-width: 768px) {
-      body {
-        padding: 0.5rem;
-      }
-      
-      .input-group {
-        flex-direction: column;
-      }
-      
-      .input-section {
-        flex-direction: column;
-      }
-      
-      .message-content {
-        max-width: 90%;
-      }
-      
-      .header h1 {
-        font-size: 2rem;
-      }
+    .hint {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    /* ── SCROLLBAR GLOBAL ────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #c8d1da; border-radius: 3px; }
+
+    /* ── RESPONSIVE ──────────────────────────────────── */
+    @media (max-width: 900px) {
+      .chat-panel { width: 300px; }
+      .sidebar { width: 200px; }
+    }
+    @media (max-width: 700px) {
+      .sidebar { display: none; }
+      .chat-panel { width: 100%; }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>
-        <svg class="github-icon" viewBox="0 0 24 24">
-          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-        </svg>
-        GitHub Code Analyzer
-      </h1>
-      <p>Analyze repositories with AI-powered insights and file browsing</p>
-    </div>
 
-    <div class="repo-section">
-      <h3>
-        <span class="status-indicator" id="status-indicator"></span>
-        Load Repository
-      </h3>
-      <div class="input-group">
-        <input 
-          id="repo-url" 
-          class="repo-input"
-          placeholder="Enter GitHub URL (e.g., https://github.com/user/repo)"
-          type="url"
-        />
-        <button class="load-btn" onclick="loadRepo()" id="load-btn">
-          <span id="load-text">Load Repository</span>
+<!-- NAV -->
+<nav class="nav">
+  <a class="nav-brand" href="#">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+    </svg>
+    Code Analyzer
+  </a>
+  <div class="nav-divider"></div>
+  <div class="nav-repo-form">
+    <input
+      id="repo-url"
+      class="nav-input"
+      type="url"
+      placeholder="https://github.com/owner/repository"
+      autocomplete="off"
+    />
+    <button class="btn btn-primary" onclick="loadRepo()" id="load-btn">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+        <path d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13H13c1.657 0 3-1.343 3-3 0-1.301-.08-2.205-1.819-2.819C14.792 6.093 14 5.05 14 4c0-2.21-1.79-4-4-4-.914 0-1.776.294-2 2z"/>
+      </svg>
+      Load
+    </button>
+  </div>
+  <div class="nav-status" id="nav-status">
+    <div class="status-dot" id="status-dot"></div>
+    <span id="status-text">No repository loaded</span>
+  </div>
+</nav>
+
+<!-- WORKSPACE -->
+<div class="workspace">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="panel-title">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+        <path d="M1.75 1A1.75 1.75 0 0 0 0 2.75v10.5C0 14.216.784 15 1.75 15h12.5A1.75 1.75 0 0 0 16 13.25v-8.5A1.75 1.75 0 0 0 14.25 3H7.5a.25.25 0 0 1-.2-.1l-.9-1.2C6.07 1.26 5.55 1 5 1H1.75z"/>
+      </svg>
+      Explorer
+    </div>
+    <div class="file-tree" id="file-tree">
+      <div class="sidebar-empty" id="sidebar-empty">
+        <svg width="24" height="24" viewBox="0 0 16 16" fill="currentColor" style="color:var(--text-muted);opacity:.5">
+          <path d="M1.75 1A1.75 1.75 0 0 0 0 2.75v10.5C0 14.216.784 15 1.75 15h12.5A1.75 1.75 0 0 0 16 13.25v-8.5A1.75 1.75 0 0 0 14.25 3H7.5a.25.25 0 0 1-.2-.1l-.9-1.2C6.07 1.26 5.55 1 5 1H1.75z"/>
+        </svg>
+        <p>Load a repository to browse files</p>
+      </div>
+    </div>
+  </aside>
+
+  <!-- EDITOR -->
+  <section class="editor">
+    <div class="editor-tabs" id="editor-tabs">
+      <div class="editor-tab active" id="welcome-tab">Welcome</div>
+    </div>
+    <div class="editor-body" id="editor-body">
+      <div class="editor-placeholder" id="editor-placeholder">
+        <svg width="40" height="40" viewBox="0 0 16 16" fill="currentColor" style="color:var(--text-muted);opacity:.3">
+          <path d="M4 1.75C4 .784 4.784 0 5.75 0h5.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v8.586A1.75 1.75 0 0 1 14.25 15h-9a.75.75 0 0 1 0-1.5h9a.25.25 0 0 0 .25-.25V6h-2.75A1.75 1.75 0 0 1 10 4.25V1.5H5.75a.25.25 0 0 0-.25.25v2.5a.75.75 0 0 1-1.5 0Zm1.5 10.25a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 0 1.5h-3a.75.75 0 0 1-.75-.75Zm-3-3a.75.75 0 0 1 .75-.75h6a.75.75 0 0 1 0 1.5h-6a.75.75 0 0 1-.75-.75Zm-1-3a.75.75 0 0 1 .75-.75h7a.75.75 0 0 1 0 1.5h-7a.75.75 0 0 1-.75-.75Z"/>
+        </svg>
+        <p>Select a file from the explorer to view its contents</p>
+      </div>
+      <div class="code-wrap" id="code-wrap" style="display:none">
+        <div class="line-nums" id="line-nums"></div>
+        <div class="code-content"><pre id="code-pre"></pre></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHAT -->
+  <aside class="chat-panel">
+    <div class="panel-title">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+        <path d="M2.678 11.894a1 1 0 0 1 .287.801 11 11 0 0 1-.398 2c1.395-.323 2.247-.697 2.634-.893a1 1 0 0 1 .71-.074A8 8 0 0 0 8 14c3.996 0 7-2.807 7-6s-3.004-6-7-6-7 2.808-7 6c0 1.468.617 2.83 1.678 3.894m-.493 3.905a22 22 0 0 1-.713.129c-.2.032-.352-.176-.273-.362a10 10 0 0 0 .244-.637l.003-.01c.248-.72.45-1.548.524-2.319C.743 11.37 0 9.76 0 8c0-3.866 3.582-7 8-7s8 3.134 8 7-3.582 7-8 7a9 9 0 0 1-2.347-.306c-.52.263-1.639.742-3.468 1.105"/>
+      </svg>
+      AI Assistant
+    </div>
+    <div class="chat-messages" id="chat-messages">
+      <div class="chat-empty" id="chat-empty">
+        <svg width="28" height="28" viewBox="0 0 16 16" fill="currentColor" style="color:var(--text-muted);opacity:.4">
+          <path d="M2.678 11.894a1 1 0 0 1 .287.801 11 11 0 0 1-.398 2c1.395-.323 2.247-.697 2.634-.893a1 1 0 0 1 .71-.074A8 8 0 0 0 8 14c3.996 0 7-2.807 7-6s-3.004-6-7-6-7 2.808-7 6c0 1.468.617 2.83 1.678 3.894m-.493 3.905a22 22 0 0 1-.713.129c-.2.032-.352-.176-.273-.362a10 10 0 0 0 .244-.637l.003-.01c.248-.72.45-1.548.524-2.319C.743 11.37 0 9.76 0 8c0-3.866 3.582-7 8-7s8 3.134 8 7-3.582 7-8 7a9 9 0 0 1-2.347-.306c-.52.263-1.639.742-3.468 1.105"/>
+        </svg>
+        <p>Load a repository and ask questions about the code.</p>
+      </div>
+    </div>
+    <div class="chat-footer">
+      <div class="chat-input-row">
+        <textarea
+          id="chat-input"
+          class="chat-textarea"
+          placeholder="Ask about the code..."
+          rows="1"
+        ></textarea>
+        <button class="btn-send" id="send-btn" onclick="sendMessage()" title="Send (Enter)">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576zm6.787-8.201L1.591 6.602l4.339 2.76z"/>
+          </svg>
         </button>
       </div>
+      <div class="hint">Enter to send &nbsp;·&nbsp; Shift+Enter for new line</div>
     </div>
+  </aside>
 
-    <div class="main-content">
-      <div class="left-panel">
-        <div class="explorer-section">
-          <div class="section-header">
-            📁 Repository Structure
-          </div>
-          <div class="file-tree" id="file-tree">
-            <div class="empty-state">
-              <div class="empty-state-icon">📂</div>
-              <p>Load a repository to explore its structure</p>
-            </div>
-          </div>
-        </div>
+</div>
 
-        <div class="file-viewer">
-          <div class="section-header">
-            📄 File Viewer
-          </div>
-          <div class="file-path" id="file-path">No file selected</div>
-          <div class="file-content empty" id="file-content">
-            Select a file from the repository structure to view its contents
-          </div>
-        </div>
-      </div>
+<script>
+  let repoLoaded = false;
+  let currentFile = null;
 
-      <div class="right-panel">
-        <div class="chat-section">
-          <div class="section-header">
-            💬 Chat with your code
-          </div>
-          <div class="chat-box" id="chat-box">
-            <div class="empty-state">
-              <div class="empty-state-icon">🤖</div>
-              <p>Load a repository and start asking questions about the code!</p>
-            </div>
-          </div>
-          <div class="input-section">
-            <textarea 
-              id="user-input" 
-              class="message-input"
-              placeholder="Ask something about the code..."
-              rows="1"
-            ></textarea>
-            <button class="send-btn" onclick="sendMessage()" id="send-btn">
-              <span id="send-text">Send</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+  /* ── textarea auto-resize ── */
+  const chatInput = document.getElementById('chat-input');
+  chatInput.addEventListener('input', () => {
+    chatInput.style.height = 'auto';
+    chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
+  });
+  chatInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  });
+  document.getElementById('repo-url').addEventListener('keydown', e => {
+    if (e.key === 'Enter') loadRepo();
+  });
 
-  <script>
-    let isLoading = false;
-    let repositoryLoaded = false;
-    let repoStructure = null;
-    let repoFiles = {};
+  /* ── status ── */
+  function setStatus(state, text) {
+    document.getElementById('status-dot').className  = 'status-dot ' + (state || '');
+    document.getElementById('status-text').textContent = text;
+  }
 
-    // Auto-resize textarea
-    document.getElementById('user-input').addEventListener('input', function() {
-      this.style.height = 'auto';
-      this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+  /* ── load repo ── */
+  async function loadRepo() {
+    const url = document.getElementById('repo-url').value.trim();
+    if (!url) return;
+
+    const btn = document.getElementById('load-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div>';
+    setStatus('loading', 'Cloning...');
+
+    try {
+      const r1 = await fetch('/load_repo', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({url})
+      });
+      const d1 = await r1.json();
+      if (!r1.ok) throw new Error(d1.error || 'Failed to load');
+
+      setStatus('loading', 'Indexing...');
+
+      const r2 = await fetch('/get_repo_structure');
+      const d2 = await r2.json();
+      if (!r2.ok) throw new Error(d2.error || 'Failed to get structure');
+
+      repoLoaded = true;
+      setStatus('ready', `${d2.files.length} files indexed`);
+      hidePlaceholders();
+      buildTree(d2.files);
+      addSystemMsg(`Repository loaded — ${d2.files.length} files indexed. Ask me anything about this codebase.`);
+
+    } catch (err) {
+      setStatus('', 'Error: ' + err.message);
+      addSystemMsg('Error: ' + err.message, true);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13H13c1.657 0 3-1.343 3-3 0-1.301-.08-2.205-1.819-2.819C14.792 6.093 14 5.05 14 4c0-2.21-1.79-4-4-4-.914 0-1.776.294-2 2z"/></svg> Load`;
+    }
+  }
+
+  function hidePlaceholders() {
+    document.getElementById('sidebar-empty').style.display = 'none';
+    document.getElementById('chat-empty').style.display = 'none';
+  }
+
+  /* ── file tree ── */
+  const FILE_ICONS = {
+    py: '#3b82f6', js: '#f59e0b', ts: '#3b82f6', jsx: '#61dafb', tsx: '#61dafb',
+    html: '#f97316', css: '#a855f7', json: '#10b981', md: '#6b7280',
+    yml: '#ec4899', yaml: '#ec4899', sh: '#22c55e', gitignore: '#6b7280'
+  };
+
+  function fileColor(name) {
+    const ext = name.split('.').pop().toLowerCase();
+    return FILE_ICONS[ext] || '#9198a1';
+  }
+
+  function fileIconSvg(name) {
+    const c = fileColor(name);
+    return `<svg width="14" height="14" viewBox="0 0 16 16" fill="${c}"><path d="M4 1.75C4 .784 4.784 0 5.75 0h5.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v8.586A1.75 1.75 0 0 1 14.25 15h-9a.75.75 0 0 1 0-1.5h9a.25.25 0 0 0 .25-.25V6h-2.75A1.75 1.75 0 0 1 10 4.25V1.5H5.75a.25.25 0 0 0-.25.25v2.5a.75.75 0 0 1-1.5 0Z"/></svg>`;
+  }
+
+  function folderIconSvg() {
+    return `<svg width="14" height="14" viewBox="0 0 16 16" fill="#f59e0b"><path d="M1.75 1A1.75 1.75 0 0 0 0 2.75v10.5C0 14.216.784 15 1.75 15h12.5A1.75 1.75 0 0 0 16 13.25v-8.5A1.75 1.75 0 0 0 14.25 3H7.5a.25.25 0 0 1-.2-.1l-.9-1.2C6.07 1.26 5.55 1 5 1H1.75z"/></svg>`;
+  }
+
+  function chevronSvg() {
+    return `<svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor"><path d="M6.22 3.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z"/></svg>`;
+  }
+
+  function buildTree(files) {
+    const tree = {};
+    files.forEach(f => {
+      const parts = f.path.split('/');
+      let node = tree;
+      parts.forEach((p, i) => {
+        if (i === parts.length - 1) {
+          node[p] = { _file: true, path: f.path, content: f.content };
+        } else {
+          node[p] = node[p] || { _dir: true, children: {} };
+          node = node[p].children;
+        }
+      });
     });
 
-    // Enter to send message (Shift+Enter for new line)
-    document.getElementById('user-input').addEventListener('keydown', function(e) {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-      }
+    const container = document.getElementById('file-tree');
+    container.innerHTML = '';
+    renderTree(tree, container, 0);
+  }
+
+  function renderTree(node, container, depth) {
+    const entries = Object.entries(node).sort(([a, av], [b, bv]) => {
+      if (av._dir && !bv._dir) return -1;
+      if (!av._dir && bv._dir) return 1;
+      return a.localeCompare(b);
     });
 
-    function updateStatus(status) {
-      const indicator = document.getElementById('status-indicator');
-      indicator.className = 'status-indicator ' + status;
-    }
+    entries.forEach(([name, data]) => {
+      if (data._dir) {
+        const wrapper = document.createElement('div');
 
-    function getFileIcon(filename) {
-      const ext = filename.split('.').pop().toLowerCase();
-      switch (ext) {
-        case 'py':
-          return '🐍';
-        case 'js':
-          return '📜';
-        case 'html':
-          return '🌐';
-        case 'css':
-          return '🎨';
-        case 'md':
-          return '📝';
-        case 'json':
-          return '📋';
-        case 'txt':
-          return '📄';
-        case 'yml':
-        case 'yaml':
-          return '⚙️';
-        default:
-          return '📄';
-      }
-    }
+        const row = document.createElement('div');
+        row.className = 'tree-row';
+        row.style.paddingLeft = (8 + depth * 14) + 'px';
+        row.innerHTML = `
+          <span class="tree-chevron" id="chev-${name}-${depth}">${chevronSvg()}</span>
+          ${folderIconSvg()}
+          <span class="tree-label">${name}</span>
+        `;
 
-    function createFileStructure(files) {
-      const structure = {};
-      
-      files.forEach(file => {
-        const parts = file.path.split('/');
-        let current = structure;
-        
-        for (let i = 0; i < parts.length; i++) {
-          const part = parts[i];
-          if (i === parts.length - 1) {
-            // It's a file
-            current[part] = {
-              type: 'file',
-              path: file.path,
-              content: file.content
-            };
-          } else {
-            // It's a directory
-            if (!current[part]) {
-              current[part] = {
-                type: 'directory',
-                children: {}
-              };
-            }
-            current = current[part].children;
-          }
-        }
-      });
-      
-      return structure;
-    }
+        const kids = document.createElement('div');
+        kids.className = 'tree-children';
+        renderTree(data.children, kids, depth + 1);
 
-    function renderFileTree(structure, container, level = 0) {
-      const entries = Object.entries(structure).sort(([a, aData], [b, bData]) => {
-        // Directories first, then files
-        if (aData.type === 'directory' && bData.type === 'file') return -1;
-        if (aData.type === 'file' && bData.type === 'directory') return 1;
-        return a.localeCompare(b);
-      });
-
-      entries.forEach(([name, data]) => {
-        const item = document.createElement('div');
-        item.className = 'tree-item';
-        
-        const indent = document.createElement('div');
-        indent.className = 'tree-indent';
-        indent.style.marginLeft = `${level * 20}px`;
-        
-        const icon = document.createElement('div');
-        icon.className = 'tree-icon';
-        
-        const nameSpan = document.createElement('span');
-        nameSpan.className = 'tree-name';
-        nameSpan.textContent = name;
-        
-        if (data.type === 'directory') {
-          icon.innerHTML = '▶️';
-          icon.className += ' folder-icon';
-          item.className += ' expandable';
-          
-          const childContainer = document.createElement('div');
-          childContainer.className = 'hidden';
-          
-          item.addEventListener('click', (e) => {
-            e.stopPropagation();
-            item.classList.toggle('expanded');
-            childContainer.classList.toggle('hidden');
-          });
-          
-          item.appendChild(indent);
-          item.appendChild(icon);
-          item.appendChild(nameSpan);
-          container.appendChild(item);
-          container.appendChild(childContainer);
-          
-          renderFileTree(data.children, childContainer, level + 1);
-        } else {
-          icon.textContent = getFileIcon(name);
-          icon.className += ' file-icon';
-          
-          item.addEventListener('click', () => {
-            // Remove previous selection
-            document.querySelectorAll('.tree-item.selected').forEach(el => {
-              el.classList.remove('selected');
-            });
-            item.classList.add('selected');
-            
-            // Show file content
-            showFileContent(data.path, data.content, name);
-          });
-          
-          item.appendChild(indent);
-          item.appendChild(icon);
-          item.appendChild(nameSpan);
-          container.appendChild(item);
-        }
-      });
-    }
-
-    function showFileContent(path, content, filename) {
-      const pathElement = document.getElementById('file-path');
-      const contentElement = document.getElementById('file-content');
-      
-      pathElement.textContent = path;
-      contentElement.textContent = content;
-      contentElement.className = 'file-content';
-    }
-
-    async function loadRepo() {
-      const url = document.getElementById('repo-url').value.trim();
-      if (!url) {
-        alert('Please enter a GitHub URL');
-        return;
-      }
-
-      const loadBtn = document.getElementById('load-btn');
-      const loadText = document.getElementById('load-text');
-      
-      isLoading = true;
-      loadBtn.disabled = true;
-      loadText.innerHTML = '<div class="loading"></div>';
-      updateStatus('loading');
-
-      try {
-        // Load repository
-        console.log('Loading repository:', url);
-        const res = await fetch('/load_repo', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({url})
-        });
-        
-        const data = await res.json();
-        
-        if (!res.ok) {
-          throw new Error(data.error || 'Failed to load repository');
-        }
-
-        console.log('Repository loaded, getting structure...');
-
-        // Get repository structure
-        const structureRes = await fetch('/get_repo_structure', {
-          method: 'GET'
-        });
-        
-        const structureData = await structureRes.json();
-        
-        if (!structureRes.ok) {
-          throw new Error(structureData.error || 'Failed to get repository structure');
-        }
-
-        repositoryLoaded = true;
-        updateStatus('ready');
-        
-        // Render file tree
-        const fileTreeContainer = document.getElementById('file-tree');
-        fileTreeContainer.innerHTML = '';
-        
-        repoStructure = createFileStructure(structureData.files);
-        renderFileTree(repoStructure, fileTreeContainer);
-        
-        // Clear chat and show success message
-        document.getElementById('chat-box').innerHTML = '';
-        addMessage('system', `Repository loaded successfully! Found ${structureData.files.length} files. You can now browse the code and ask questions.`);
-        
-      } catch (error) {
-        console.error('Error loading repository:', error);
-        updateStatus('');
-        alert('Error loading repository: ' + error.message);
-      } finally {
-        isLoading = false;
-        loadBtn.disabled = false;
-        loadText.textContent = 'Load Repository';
-      }
-    }
-
-    async function sendMessage() {
-      const input = document.getElementById('user-input');
-      const msg = input.value.trim();
-      
-      if (!msg) return;
-      if (!repositoryLoaded) {
-        alert('Please load a repository first');
-        return;
-      }
-
-      const sendBtn = document.getElementById('send-btn');
-      const sendText = document.getElementById('send-text');
-      
-      // Add user message
-      addMessage('user', msg);
-      input.value = '';
-      input.style.height = 'auto';
-
-      // Show loading state
-      sendBtn.disabled = true;
-      sendText.innerHTML = '<div class="loading"></div>';
-
-      // Create empty bot message for streaming
-      const botMessageId = addStreamingMessage('bot', '');
-
-      try {
-        const response = await fetch('/chat', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ message: msg })
+        row.addEventListener('click', e => {
+          e.stopPropagation();
+          kids.classList.toggle('open');
+          row.querySelector('.tree-chevron').classList.toggle('open');
         });
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        wrapper.appendChild(row);
+        wrapper.appendChild(kids);
+        container.appendChild(wrapper);
 
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          
-          // Process complete lines
-          let lines = buffer.split('\n');
-          buffer = lines.pop(); // Keep incomplete line in buffer
-
-          for (let line of lines) {
-            if (line.startsWith('data: ')) {
-              try {
-                const data = JSON.parse(line.slice(6));
-                
-                if (data.error) {
-                  throw new Error(data.error);
-                }
-                
-                if (data.chunk) {
-                  appendToStreamingMessage(botMessageId, data.chunk);
-                }
-                
-                if (data.done) {
-                  finishStreamingMessage(botMessageId);
-                  break;
-                }
-              } catch (e) {
-                if (e.name !== 'SyntaxError') {
-                  console.error('Error parsing streaming data:', e);
-                }
-              }
-            }
-          }
-        }
-        
-      } catch (error) {
-        updateStreamingMessage(botMessageId, 'Sorry, there was an error: ' + error.message);
-      } finally {
-        sendBtn.disabled = false;
-        sendText.textContent = 'Send';
+      } else {
+        const row = document.createElement('div');
+        row.className = 'tree-row';
+        row.style.paddingLeft = (8 + depth * 14) + 'px';
+        row.innerHTML = `
+          <span style="width:10px;flex-shrink:0"></span>
+          ${fileIconSvg(name)}
+          <span class="tree-label">${name}</span>
+        `;
+        row.addEventListener('click', () => {
+          document.querySelectorAll('.tree-row.active').forEach(r => r.classList.remove('active'));
+          row.classList.add('active');
+          openFile(name, data.path, data.content);
+        });
+        container.appendChild(row);
       }
-    }
+    });
+  }
 
-    function addMessage(type, content) {
-      const chatBox = document.getElementById('chat-box');
-      const messageDiv = document.createElement('div');
-      messageDiv.className = `message ${type}`;
-      
-      const label = type === 'user' ? 'You' : type === 'system' ? 'System' : 'AI Assistant';
-      
-      messageDiv.innerHTML = `
-        <div class="message-label">${label}</div>
-        <div class="message-content">${formatMessage(content)}</div>
-      `;
-      
-      chatBox.appendChild(messageDiv);
-      chatBox.scrollTop = chatBox.scrollHeight;
-    }
+  /* ── file viewer ── */
+  function openFile(name, path, content) {
+    const tabsEl = document.getElementById('editor-tabs');
+    tabsEl.innerHTML = `<div class="editor-tab active">${fileIconSvg(name)} ${name}</div>`;
 
-    function addStreamingMessage(type, content) {
-      const chatBox = document.getElementById('chat-box');
-      const messageDiv = document.createElement('div');
-      messageDiv.className = `message ${type}`;
-      
-      const messageId = 'msg-' + Date.now();
-      messageDiv.id = messageId;
-      
-      const label = type === 'user' ? 'You' : type === 'system' ? 'System' : 'AI Assistant';
-      
-      messageDiv.innerHTML = `
-        <div class="message-label">${label}</div>
-        <div class="message-content">${formatMessage(content)}<span class="cursor">▋</span></div>
-      `;
-      
-      chatBox.appendChild(messageDiv);
-      chatBox.scrollTop = chatBox.scrollHeight;
-      
-      return messageId;
-    }
+    document.getElementById('editor-placeholder').style.display = 'none';
 
-    function appendToStreamingMessage(messageId, chunk) {
-      const messageDiv = document.getElementById(messageId);
-      if (messageDiv) {
-        const contentDiv = messageDiv.querySelector('.message-content');
-        const cursor = contentDiv.querySelector('.cursor');
-        
-        if (cursor) {
-          // Insert chunk before cursor
-          const textNode = document.createTextNode(chunk);
-          cursor.parentNode.insertBefore(textNode, cursor);
-        } else {
-          // No cursor, just append
-          contentDiv.appendChild(document.createTextNode(chunk));
+    const lines = (content || '').split('\n');
+    const lineNumsEl = document.getElementById('line-nums');
+    const preEl = document.getElementById('code-pre');
+    const wrap = document.getElementById('code-wrap');
+
+    lineNumsEl.innerHTML = lines.map((_, i) => `<span class="line-num">${i + 1}</span>`).join('');
+    preEl.textContent = content || '';
+    wrap.style.display = 'table';
+  }
+
+  /* ── chat ── */
+  function now() {
+    return new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  }
+
+  function addSystemMsg(text, isError = false) {
+    const box = document.getElementById('chat-messages');
+    const div = document.createElement('div');
+    div.className = 'msg system';
+    div.innerHTML = `
+      <div class="msg-bubble" style="${isError ? 'background:#fff0f0;border-color:#f5b8b8;color:#cf222e' : ''}">
+        ${escHtml(text)}
+      </div>
+    `;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function addUserMsg(text) {
+    const box = document.getElementById('chat-messages');
+    const div = document.createElement('div');
+    div.className = 'msg user';
+    div.innerHTML = `
+      <div class="msg-meta">${now()}</div>
+      <div class="msg-bubble">${escHtml(text)}</div>
+    `;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function addBotMsg() {
+    const box = document.getElementById('chat-messages');
+    const div = document.createElement('div');
+    div.className = 'msg bot';
+    const id = 'bot-' + Date.now();
+    div.innerHTML = `
+      <div class="msg-meta">AI Assistant &nbsp;·&nbsp; ${now()}</div>
+      <div class="msg-bubble" id="${id}"><span class="cursor-blink"></span></div>
+    `;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+    return id;
+  }
+
+  function appendBot(id, chunk) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const cursor = el.querySelector('.cursor-blink');
+    if (cursor) cursor.before(document.createTextNode(chunk));
+    else el.appendChild(document.createTextNode(chunk));
+    el.closest('.chat-messages').scrollTop = el.closest('.chat-messages').scrollHeight;
+  }
+
+  function finalizeBot(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const cursor = el.querySelector('.cursor-blink');
+    if (cursor) cursor.remove();
+    // format inline code
+    el.innerHTML = el.innerHTML.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  async function sendMessage() {
+    const input = document.getElementById('chat-input');
+    const msg = input.value.trim();
+    if (!msg) return;
+    if (!repoLoaded) { addSystemMsg('Please load a repository first.', true); return; }
+
+    addUserMsg(msg);
+    input.value = '';
+    input.style.height = 'auto';
+
+    const sendBtn = document.getElementById('send-btn');
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = '<div class="spinner"></div>';
+
+    const botId = addBotMsg();
+
+    try {
+      const resp = await fetch('/chat', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({message: msg})
+      });
+
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+
+      const reader = resp.body.getReader();
+      const dec = new TextDecoder();
+      let buf = '';
+
+      while (true) {
+        const {done, value} = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, {stream: true});
+        const lines = buf.split('\n');
+        buf = lines.pop();
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          try {
+            const d = JSON.parse(line.slice(6));
+            if (d.chunk) appendBot(botId, d.chunk);
+            if (d.done)  { finalizeBot(botId); break; }
+            if (d.error) throw new Error(d.error);
+          } catch(e) { if (e.name !== 'SyntaxError') throw e; }
         }
-        
-        // Auto scroll
-        const chatBox = document.getElementById('chat-box');
-        chatBox.scrollTop = chatBox.scrollHeight;
       }
-    }
+      finalizeBot(botId);
 
-    function updateStreamingMessage(messageId, content) {
-      const messageDiv = document.getElementById(messageId);
-      if (messageDiv) {
-        const contentDiv = messageDiv.querySelector('.message-content');
-        contentDiv.innerHTML = formatMessage(content);
-      }
+    } catch(err) {
+      const el = document.getElementById(botId);
+      if (el) { el.textContent = 'Error: ' + err.message; el.style.color = '#cf222e'; }
+    } finally {
+      sendBtn.disabled = false;
+      sendBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576zm6.787-8.201L1.591 6.602l4.339 2.76z"/></svg>`;
     }
-
-    function finishStreamingMessage(messageId) {
-      const messageDiv = document.getElementById(messageId);
-      if (messageDiv) {
-        const cursor = messageDiv.querySelector('.cursor');
-        if (cursor) {
-          cursor.remove();
-        }
-      }
-    }
-
-    function formatMessage(content) {
-      // Simple formatting for better readability
-      return content
-        .replace(/\n/g, '<br>')
-        .replace(/`([^`]+)`/g, '<code>$1</code>')
-        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*([^*]+)\*/g, '<em>$1</em>');
-    }
-
-    // Initialize status
-    updateStatus('');
-  </script>
+  }
+</script>
 </body>
 </html>

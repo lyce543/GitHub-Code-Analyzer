@@ -43,7 +43,9 @@ app.mount("/", StaticFiles(directory=APP_CONFIG['frontend_folder'], html=True), 
 
 if __name__ == "__main__":
     import uvicorn
-    print(f"🚀 Starting {APP_CONFIG['app_title']}...")
-    print("🔑 Make sure you have set OPENAI_API_KEY in your .env file")
-    print(f"💡 Optional: Set OPENAI_MODEL (default: {OPENAI_CONFIG['default_model']})")
-    uvicorn.run(app, host=APP_CONFIG['host'], port=APP_CONFIG['port'])
+    uvicorn.run(
+        app,
+        host=APP_CONFIG['host'],
+        port=APP_CONFIG['port'],
+        reload_excludes=["repos/*", "vectorstore/*", "repo_state.json"],
+    )

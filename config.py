@@ -31,6 +31,13 @@ FILE_PROCESSING_CONFIG = {
     'excluded_folders': ['.git', '__pycache__', 'node_modules', '.vscode', '.idea'],
 }
 
+# OpenRouter Configuration
+OPENROUTER_CONFIG = {
+    'base_url': 'https://openrouter.ai/api/v1',
+    'default_model': 'openai/gpt-4o-mini',
+    'embedding_model': 'sentence-transformers/all-MiniLM-L6-v2',
+}
+
 # CORS Configuration
 CORS_CONFIG = {
     'allow_origins': ["*"],

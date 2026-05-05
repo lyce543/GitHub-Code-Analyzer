@@ -1,9 +1,8 @@
-from langchain.vectorstores import FAISS
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.vectorstores import FAISS
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
-from langchain.chains import RetrievalQA
-from utils.llm import get_openai_llm, get_openai_llm_streaming
-from config import OPENAI_CONFIG, APP_CONFIG
+from utils.llm import get_openai_llm, get_openai_llm_streaming, _use_openrouter
+from config import OPENAI_CONFIG, OPENROUTER_CONFIG, APP_CONFIG
 import os
 import json
 
@@ -12,10 +11,12 @@ VECTORSTORE_PATH = APP_CONFIG['vectorstore_path']
 STATE_FILE = APP_CONFIG['state_file']
 
 def get_embeddings():
-    """Get OpenAI embeddings instance"""
+    if _use_openrouter():
+        from langchain_huggingface import HuggingFaceEmbeddings
+        return HuggingFaceEmbeddings(model_name=OPENROUTER_CONFIG['embedding_model'])
     return OpenAIEmbeddings(
         api_key=os.getenv("OPENAI_API_KEY"),
-        model=OPENAI_CONFIG['embedding_model']
+        model=OPENAI_CONFIG['embedding_model'],
     )
 
 def load_repo_state():
@@ -108,13 +109,20 @@ def get_answer_from_repo(question):
 
     print("🟢 RAG answering question:", question)
     try:
+        retriever = db.as_retriever(search_kwargs={"k": OPENAI_CONFIG['retrieval_k']})
+        docs = retriever.invoke(question)
+        context = "\n\n".join([doc.page_content for doc in docs])
+        prompt = f"""Based on the following code repository context, please answer the question.
+
+Context from repository:
+{context}
+
+Question: {question}
+
+Please provide a detailed and helpful answer based on the code context above."""
         llm = get_openai_llm()
-        qa = RetrievalQA.from_chain_type(
-            llm=llm,
-            retriever=db.as_retriever(),
-            chain_type_kwargs={"verbose": True}
-        )
-        return qa.run(question)
+        response = llm.invoke(prompt)
+        return response.content
     except Exception as e:
         print(f"⛔ Error in get_answer_from_repo: {e}")
         return f"Error generating answer: {str(e)}"
@@ -139,7 +147,7 @@ def get_answer_from_repo_streaming(question):
     try:
         # Get relevant documents using OpenAI embeddings
         retriever = db.as_retriever(search_kwargs={"k": OPENAI_CONFIG['retrieval_k']})
-        docs = retriever.get_relevant_documents(question)
+        docs = retriever.invoke(question)
         
         if not docs:
             yield "No relevant documents found in the repository."
