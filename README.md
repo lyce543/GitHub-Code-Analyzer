@@ -1,4 +1,4 @@
-# CODEX AI — GitHub Code Intelligence
+# CODEX AI — GitHub Code Intelligence.
 
 > Paste a GitHub URL. Ask anything. Understand any codebase in minutes.
 
